@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-03",
+  "title": "Five good minutes",
+  "intro": "Five little things worth knowing today.",
+  "items": [
+    {
+      "q": "Which animal has fingerprints so similar to humans they can confuse investigators?",
+      "a": [
+        "Koala",
+        "Otter",
+        "Raccoon",
+        "Panda"
+      ],
+      "correct": 0,
+      "why": "Koalas have ridged fingerprints remarkably similar to ours—even under a microscope."
+    },
+    {
+      "q": "Which planet would float in water, if you had a bathtub large enough?",
+      "a": [
+        "Mars",
+        "Saturn",
+        "Venus",
+        "Neptune"
+      ],
+      "correct": 1,
+      "why": "Saturn's average density is lower than water's."
+    },
+    {
+      "q": "What do sea stars use hundreds of tiny tube feet for?",
+      "a": [
+        "Only walking",
+        "Moving, feeding and sensing",
+        "Making sound",
+        "Storing oxygen"
+      ],
+      "correct": 1,
+      "why": "Their tube feet are hydraulic multitaskers used for movement, handling food and sensing their surroundings."
+    },
+    {
+      "q": "About how long does sunlight take to reach Earth?",
+      "a": [
+        "8 seconds",
+        "8 minutes",
+        "80 minutes",
+        "8 hours"
+      ],
+      "correct": 1,
+      "why": "Sunlight takes roughly 8 minutes and 20 seconds to reach Earth."
+    },
+    {
+      "q": "What is the largest ocean on Earth?",
+      "a": [
+        "Atlantic",
+        "Indian",
+        "Arctic",
+        "Pacific"
+      ],
+      "correct": 3,
+      "why": "The Pacific is Earth's largest and deepest ocean."
+    }
+  ]
+}
