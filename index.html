@@ -70,7 +70,7 @@ function shareResult(){
  if(navigator.share){navigator.share({title:"Bookends",text:text,url:location.href}).catch(function(){})}
  else if(navigator.clipboard){navigator.clipboard.writeText(text+" "+location.href).then(function(){alert("Result copied!")})}
 }
-fetch("./day.json?v=5",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(d){day=d;home()}).catch(function(e){clear();app.append(el("h2","","Couldn't load today's five."),el("p","",String(e.message)))});
+async function loadDay(){try{var base="https://gsqzjumawdvzvygzpctu.supabase.co/rest/v1/";var key="sb_publishable_ymkB1pB3WCQisADza7u1Ww_iOMdVqdt";var today=new Date().toISOString().slice(0,10);var h={apikey:key,Authorization:"Bearer "+key};var dr=await fetch(base+"days?select=id,date,title,intro&status=eq.published&date=eq."+today+"&limit=1",{headers:h,cache:"no-store"});if(!dr.ok)throw new Error("database");var ds=await dr.json();if(ds.length){var d=ds[0];var ir=await fetch(base+"items?select=position,prompt,options,correct_index,explanation&day_id=eq."+d.id+"&order=position.asc",{headers:h,cache:"no-store"});if(!ir.ok)throw new Error("items");var items=await ir.json();if(items.length===5){day={date:d.date,title:d.title,intro:d.intro,items:items.map(function(x){return{q:x.prompt,a:x.options,correct:x.correct_index,why:x.explanation}})};home();return}}}catch(e){}fetch("./day.json?v=6",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(d){day=d;home()}).catch(function(e){clear();app.append(el("h2","","Couldn't load today's five."),el("p","",String(e.message)))})}loadDay();
 </script>
 </body>
 </html>
