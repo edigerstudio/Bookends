@@ -1,76 +1,19 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4efe5">
-<title>Bookends — Daily Five</title>
-<style>
-:root{--ink:#17211d;--paper:#f4efe5;--card:#fffaf1;--line:#d9d0c1;--accent:#df735c;--green:#416657}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
-#app{max-width:560px;margin:auto;min-height:100dvh;padding:18px 18px 100px}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font:800 27px Georgia,serif;letter-spacing:-1px}.tiny{font-size:12px;opacity:.6}
-.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 8px 30px #3d32230b}.hero{padding:35px 24px;text-align:center}
-.star{font-size:58px;display:block}h1,h2{font-family:Georgia,serif;line-height:1.05;margin:12px 0}h1{font-size:42px}h2{font-size:30px}
-button{border:0;border-radius:15px;padding:15px 18px;font-weight:750;font-size:16px;background:var(--ink);color:white;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}
-button:disabled{cursor:default}.choice{background:white;color:var(--ink);border:1px solid var(--line);margin:7px 0;text-align:left}.choice.good{border-color:#548c70;background:#edf7f0}.choice.bad{border-color:#d07b6b;background:#fff0ed}
-.secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}.progress{display:flex;gap:6px;margin:14px 0 24px}.progress i{height:5px;flex:1;border-radius:5px;background:#ddd4c7}.progress i.on{background:var(--green)}
-.explain{border-left:3px solid var(--accent);padding-left:12px;margin:15px 0}.score{font:700 72px Georgia,serif;margin:0}.tag{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:800}
-</style>
-</head>
-<body>
-<main id="app"></main>
-<script>
-"use strict";
-var day=null, step=-1, score=0;
-var app=document.getElementById("app");
-
-function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
-function clear(){while(app.firstChild)app.removeChild(app.firstChild)}
-function header(){var h=el("header");var left=el("div");left.append(el("div","brand","bookends"),el("div","tiny","a daily five"));h.append(left,el("div","tiny",day.date));app.appendChild(h)}
-function button(label,fn,cls){var b=el("button",cls||"",label);b.type="button";b.addEventListener("click",fn,false);return b}
-
-function home(){
- step=-1;score=0;clear();header();
- var card=el("section","card hero");
- card.append(el("span","star","⭐"),el("div","tag","TODAY'S FIVE"),el("h1","",day.title),el("p","",day.intro),el("br"));
- card.append(button("Start today's five",next));
- card.append(el("p","tiny","No login. About five minutes."));
- app.appendChild(card);
-}
-function next(){step+=1;if(step>=day.items.length){finish();return}question()}
-function question(){
- clear();header();
- var prog=el("div","progress");
- day.items.forEach(function(_,i){prog.appendChild(el("i",i<=step?"on":""))});app.appendChild(prog);
- var x=day.items[step],card=el("section","card");
- card.append(el("div","tag",(step+1)+" OF "+day.items.length),el("h2","",x.q));
- var choices=el("div");
- x.a.forEach(function(label,i){
-   var b=button(String.fromCharCode(65+i)+". "+label,function(){answer(i,choices,feedback)});
-   b.className="choice";choices.appendChild(b);
- });
- var feedback=el("div");
- card.append(choices,feedback);app.appendChild(card);
-}
-function answer(selected,choices,feedback){
- var x=day.items[step],buttons=choices.querySelectorAll("button");
- buttons.forEach(function(b,i){b.disabled=true;if(i===Number(x.correct))b.classList.add("good");else if(i===selected)b.classList.add("bad")});
- if(selected===Number(x.correct))score+=1;
- var box=el("div","explain");box.append(el("b","",selected===Number(x.correct)?"Yep.":"Not quite."),document.createElement("br"),document.createTextNode(x.why));
- feedback.append(box,button(step===day.items.length-1?"See my finish":"Next",next));
-}
-function finish(){
- clear();header();var card=el("section","card hero");
- card.append(el("span","star","⭐"),el("div","tag","THAT'S YOUR FIVE"),el("p","score",score+"/"+day.items.length),el("h2","","See you tomorrow."),el("p","","The sea star has absolutely nothing productive to add."));
- card.append(button("Share "+score+"/"+day.items.length,shareResult),el("br"),el("br"),button("Play again",home,"secondary"));app.appendChild(card);
-}
-function shareResult(){
- var text="Bookends — "+score+"/"+day.items.length+" today ⭐\nFive good minutes.";
- if(navigator.share){navigator.share({title:"Bookends",text:text,url:location.href}).catch(function(){})}
- else if(navigator.clipboard){navigator.clipboard.writeText(text+" "+location.href).then(function(){alert("Result copied!")})}
-}
-async function loadDay(){try{var base="https://gsqzjumawdvzvygzpctu.supabase.co/rest/v1/";var key="sb_publishable_ymkB1pB3WCQisADza7u1Ww_iOMdVqdt";var today=new Date().toISOString().slice(0,10);var h={apikey:key,Authorization:"Bearer "+key};var dr=await fetch(base+"days?select=id,date,title,intro&status=eq.published&date=eq."+today+"&limit=1",{headers:h,cache:"no-store"});if(!dr.ok)throw new Error("database");var ds=await dr.json();if(ds.length){var d=ds[0];var ir=await fetch(base+"items?select=position,prompt,options,correct_index,explanation&day_id=eq."+d.id+"&order=position.asc",{headers:h,cache:"no-store"});if(!ir.ok)throw new Error("items");var items=await ir.json();if(items.length===5){day={date:d.date,title:d.title,intro:d.intro,items:items.map(function(x){return{q:x.prompt,a:x.options,correct:x.correct_index,why:x.explanation}})};home();return}}}catch(e){}fetch("./day.json?v=6",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(function(d){day=d;home()}).catch(function(e){clear();app.append(el("h2","","Couldn't load today's five."),el("p","",String(e.message)))})}loadDay();
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f4efe5"><title>Bookends — Daily Five</title><style>
+:root{--ink:#17211d;--paper:#f4efe5;--card:#fffaf1;--line:#d9d0c1;--accent:#df735c;--green:#416657}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 system-ui}#app{max-width:560px;margin:auto;min-height:100dvh;padding:18px 18px 100px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.brand{font:800 27px Georgia,serif}.tiny{font-size:12px;opacity:.62}.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}.hero{text-align:center;padding:35px 24px}h1,h2{font-family:Georgia,serif;line-height:1.08}h1{font-size:42px}h2{font-size:30px}.tag{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);font-weight:800}.progress{display:flex;gap:6px;margin:14px 0 24px}.progress i{height:5px;flex:1;border-radius:5px;background:#ddd4c7}.progress i.on{background:var(--green)}button{border:0;border-radius:15px;padding:15px 18px;font-weight:800;font-size:16px;background:var(--ink);color:white;width:100%;cursor:pointer}.choice{background:white;color:var(--ink);border:1px solid var(--line);margin:7px 0;text-align:left}.choice.selected{background:#eee5d7;border-color:var(--ink)}.confirm{margin-top:16px}.confirm:disabled{opacity:.35}.media{width:100%;max-height:330px;object-fit:cover;border-radius:16px;margin:10px 0 16px}.reveal{padding:12px 0}.reaction{font:700 34px Georgia,serif;margin:8px 0}.answerline{font-weight:800;margin:4px 0 18px}.explain{border-left:3px solid var(--accent);padding-left:13px;margin:20px 0}.pollbar{margin:13px 0}.polltrack{height:9px;background:#e2d9cc;border-radius:9px;overflow:hidden}.pollfill{height:100%;background:var(--green)}.receipt{display:flex;justify-content:center;gap:14px;font:700 22px Georgia,serif;margin:28px 0}.secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}
+</style></head><body><main id="app"></main><script>
+"use strict";var day=null,step=-1,selected=null,results=[],app=document.getElementById("app"),BASE="https://gsqzjumawdvzvygzpctu.supabase.co/rest/v1/",KEY="sb_publishable_ymkB1pB3WCQisADza7u1Ww_iOMdVqdt";
+var correctLines=["Look at you.","Well, well, well.","Nailed it.","There it is.","Knew that one, huh?","You know things.","That’ll do.","Very nice.","Bang on.","Would you look at that.","Right on the money.","Good stuff.","Yep. That’s the one.","Precisely.","Correctamundo.","We have a winner.","Nicely done.","You’ve still got it.","No notes.","Clean.","Easy money.","Big brain moment.","Suspiciously good.","Someone’s been reading.","Okay, show-off.","Alright, professor.","Save some knowledge for the rest of us.","You didn’t even hesitate.","Never doubted you.","We’ll pretend that wasn’t a guess."];
+var wrongLines=["Not quite.","Ah, nearly.","Nope. Weird, right?","Good guess, though.","Fair guess.","Honestly, reasonable.","We would’ve guessed that too.","Understandable.","Close one.","Almost had it.","Not this time.","Today you learned.","Well, now you know.","Huh. Turns out…","Plot twist.","Apparently not.","Who knew?","Yeah, we didn’t know either.","Can’t win ’em all.","We’ll allow it.","We’ll let that one slide.","No harm done.","Moving swiftly along.","Forget that happened.","Nobody saw that.","Between us.","Your secret is safe."];
+function el(t,c,x){let n=document.createElement(t);if(c)n.className=c;if(x!==undefined)n.textContent=x;return n}function clear(){app.innerHTML=""}function btn(x,f,c){let b=el("button",c||"",x);b.onclick=f;return b}function pick(a){return a[Math.floor(Math.random()*a.length)]}function localDate(){let d=new Date(),m=String(d.getMonth()+1).padStart(2,"0"),x=String(d.getDate()).padStart(2,"0");return d.getFullYear()+"-"+m+"-"+x}
+function header(){let h=el("header"),l=el("div");l.append(el("div","brand","bookends"),el("div","tiny","a daily five"));h.append(l,el("div","tiny",day.date));app.append(h)}function prog(){let p=el("div","progress");day.items.forEach((_,i)=>p.append(el("i",i<=step?"on":"")));app.append(p)}
+function home(){step=-1;results=[];clear();header();let c=el("section","card hero");c.append(el("div","tag","TODAY'S FIVE"),el("h1","",day.title),el("p","",day.intro),el("br"),btn("Start today's five",next),el("p","tiny","No login. About five minutes."));app.append(c)}
+function next(){step++;selected=null;if(step>=day.items.length)return finish();question()}
+function question(){clear();header();prog();let x=day.items[step],c=el("section","card");c.append(el("div","tag",(step+1)+" OF 5 · "+x.type.replace("_"," ")),el("h2","",x.q));if(x.image){let im=el("img","media");im.src=x.image;c.append(im)}let choices=el("div");x.a.forEach((v,i)=>{let b=btn(v,()=>{selected=i;[...choices.children].forEach((z,j)=>z.classList.toggle("selected",j===i));confirm.disabled=false},"choice");choices.append(b)});let confirm=btn("Confirm",()=>reveal(x),"confirm");confirm.disabled=true;c.append(choices,confirm);app.append(c)}
+async function reveal(x){if(selected===null)return;let isPoll=x.type==="poll",right=!isPoll&&selected===Number(x.correct);results.push({type:x.type,state:isPoll?"voted":right?"right":"wrong"});if(isPoll)await vote(x);clear();header();prog();let c=el("section","card reveal");c.append(el("div","tag",x.type.replace("_"," ")));if(x.image){let im=el("img","media");im.src=x.image;c.append(im)}if(isPoll){c.append(el("div","reaction","You picked "+x.a[selected]+"."));await pollResults(x,c)}else{c.append(el("div","reaction",pick(right?correctLines:wrongLines)),el("div","answerline",right?x.a[selected]:"It was "+x.a[Number(x.correct)]+".") )}if(x.why){let e=el("div","explain",x.why);c.append(e)}let label=step===4?"Finish":"Next →";if(step<4){let r=Math.random();if(r<.035)label="Another →";else if(r<.055)label="More pls →";else if(r<.075)label="Onward →"}c.append(btn(label,next));app.append(c)}
+function voter(){let k="bookends_voter",v=localStorage.getItem(k);if(!v){v=crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random();localStorage.setItem(k,v)}return v}
+async function vote(x){try{await fetch(BASE+"poll_votes",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({item_id:x.id,choice_index:selected,voter_id:voter()})})}catch(e){}}
+async function pollResults(x,c){try{let r=await fetch(BASE+"poll_votes?select=choice_index&item_id=eq."+x.id,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}),v=await r.json(),n=v.length;if(n<3){c.append(el("p","","Early bird. The numbers are still waking up."));return}x.a.forEach((a,i)=>{let count=v.filter(z=>z.choice_index===i).length,p=Math.round(count/n*100),w=el("div","pollbar");w.append(el("div","",a+" · "+p+"%"));let tr=el("div","polltrack"),f=el("div","pollfill");f.style.width=p+"%";tr.append(f);w.append(tr);c.append(w)})}catch(e){c.append(el("p","","The numbers are having a moment."))}}
+function finish(){clear();header();let c=el("section","card hero");c.append(el("div","tag","THAT'S YOUR FIVE"),el("h2","","See you tomorrow."));let rec=el("div","receipt");results.forEach((r,i)=>{let s={trivia:"●",poll:"◆",good_news:"✦",visual:"■",puzzle:"▲",wildcard:"◇"}[r.type]||"●";rec.append(el("span","",(i+1)+" "+s))});c.append(rec,el("p","","Five little things. That's plenty."),btn("Share today's five",share),el("br"),el("br"),btn("Play again",home,"secondary"));app.append(c)}
+function share(){let symbols=results.map((r,i)=>(i+1)+" "+({trivia:"●",poll:"◆",good_news:"✦",visual:"■",puzzle:"▲",wildcard:"◇"}[r.type]||"●")).join("  "),t="Bookends\n"+symbols+"\nFive good minutes.";if(navigator.share)navigator.share({title:"Bookends",text:t,url:location.href}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(t+" "+location.href)}
+async function load(){try{let h={apikey:KEY,Authorization:"Bearer "+KEY},dr=await fetch(BASE+"days?select=id,date,title,intro&status=eq.published&date=eq."+localDate()+"&limit=1",{headers:h}),ds=await dr.json();if(ds.length){let d=ds[0],ir=await fetch(BASE+"items?select=id,position,type,prompt,options,correct_index,explanation,image_url&day_id=eq."+d.id+"&order=position.asc",{headers:h}),it=await ir.json();if(it.length===5){day={date:d.date,title:d.title,intro:d.intro,items:it.map(x=>({id:x.id,type:x.type||"trivia",q:x.prompt,a:x.options||[],correct:x.correct_index,why:x.explanation,image:x.image_url}))};home();return}}}catch(e){}let r=await fetch("./day.json?v=7",{cache:"no-store"}),d=await r.json();day={...d,items:d.items.map(x=>({...x,type:"trivia"}))};home()}load();
+</script></body></html>
